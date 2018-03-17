@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -18,6 +21,20 @@ type RedisProxy struct {
 }
 
 func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error", http.StatusUnprocessableEntity)
+		return
+	}
+
+	key := string(body)
+	value, err := rp.RClient.Get(key).Result()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, value)
 }
 
 func main() {

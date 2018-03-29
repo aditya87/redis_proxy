@@ -35,7 +35,7 @@ var _ = Describe("Cache", func() {
 		subject.Set("key2", "value2")
 		subject.Set("key3", "value3")
 
-		Expect(subject.Keys()).To(Equal([]string{"key1", "key2", "key3"}))
+		Expect(subject.Keys()).To(ConsistOf("key1", "key2", "key3"))
 	})
 
 	It("uses LRU replacement when it hits its capacity", func() {
@@ -48,7 +48,7 @@ var _ = Describe("Cache", func() {
 
 		subject.Set("key4", "value4")
 
-		Expect(subject.Keys()).To(Equal([]string{"key1", "key2", "key4"}))
+		Expect(subject.Keys()).To(ConsistOf("key1", "key2", "key4"))
 
 		_, _ = subject.Get("key2")
 		_, _ = subject.Get("key4")

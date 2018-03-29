@@ -1,0 +1,13 @@
+FROM redis
+
+WORKDIR /app
+ADD . /app
+
+ENV REDIS_PORT=7777
+ENV REDIS_HOST=localhost
+ENV REDIS_PASSWORD=
+ENV CACHE_CAPACITY=5
+ENV EXPIRATION_TIME=10
+ENV PORT=3000
+
+CMD redis-server --port 7777 --daemonize yes && ./redis_proxy

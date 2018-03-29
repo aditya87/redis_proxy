@@ -107,7 +107,7 @@ func (c *Cache) Start() {
 			c.keyList.Remove(e)
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(c.expirationTime / 10)
 		c.mutex.Unlock()
 	}
 }

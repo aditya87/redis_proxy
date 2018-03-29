@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -28,22 +27,23 @@ var _ = Describe("RedisProxy", func() {
 	})
 
 	It("redirects HTTP GETs to Redis gets and returns the value in the response", func() {
-		rClient.Set("key", "value", 5*time.Second)
-		req, _ := http.NewRequest("GET", "/", bytes.NewBuffer([]byte(`key`)))
+		rClient.Set("k", "v", 5*time.Second)
+		req, _ := http.NewRequest("GET", "?key=k", nil)
 
 		subject.ServeGet(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
-		Expect(rClient.GetCalledWith()).To(Equal("key"))
-		Expect(rr.Body.String()).To(Equal("value"))
+		Expect(rClient.GetCalledWith()).To(Equal("k"))
+		Expect(rr.Body.String()).To(Equal("v"))
 	})
 
 	It("returns an error response if the Redis backend throws an error", func() {
-		rClient.SetError(errors.New("cannot look up value for key"))
-		req, _ := http.NewRequest("GET", "/", bytes.NewBuffer([]byte(`key`)))
+		rClient.Set("k", "v", 5*time.Second)
+		rClient.SetError(errors.New("some error"))
+		req, _ := http.NewRequest("GET", "?key=k", nil)
 
 		subject.ServeGet(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusInternalServerError))
-		Expect(rClient.GetCalledWith()).To(Equal("key"))
-		Expect(rr.Body.String()).To(ContainSubstring("cannot look up value for key"))
+		Expect(rClient.GetCalledWith()).To(Equal("k"))
+		Expect(rr.Body.String()).To(ContainSubstring("Failed to look up value for key k: some error"))
 	})
 })

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -23,16 +22,12 @@ type RedisProxy struct {
 }
 
 func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error", http.StatusUnprocessableEntity)
-		return
-	}
+	params := r.URL.Query()
+	key := params.Get("key")
 
-	key := string(body)
 	value, err := rp.RClient.Get(key).Result()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("ERROR: Failed to look up value for key %s: %s", key, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -56,7 +51,7 @@ func main() {
 	fmt.Println("Starting Redis proxy")
 
 	mux := bone.New()
-	mux.PostFunc("/", s.ServeGet)
+	mux.GetFunc("/", s.ServeGet)
 
 	http.ListenAndServe(":"+os.Getenv("PORT"), mux)
 }

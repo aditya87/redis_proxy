@@ -16,8 +16,8 @@ type CacheEntry struct {
 	value string
 }
 
-func NewCache(capacity int) Cache {
-	return Cache{
+func NewCache(capacity int) *Cache {
+	return &Cache{
 		storage:  make(map[string]CacheEntry),
 		capacity: capacity,
 		keyList:  list.New(),

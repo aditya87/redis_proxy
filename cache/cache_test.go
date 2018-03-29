@@ -7,7 +7,7 @@ import (
 )
 
 var _ = Describe("Cache", func() {
-	var subject cache.Cache
+	var subject *cache.Cache
 	capacity := 3
 
 	BeforeEach(func() {

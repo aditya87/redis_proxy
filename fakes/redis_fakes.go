@@ -40,7 +40,9 @@ func (frc *FakeRClient) Get(key string) *redis.StringCmd {
 }
 
 func (frc *FakeRClient) GetCalledWith() string {
-	return frc.getCalledWithKey
+	key := frc.getCalledWithKey
+	frc.getCalledWithKey = ""
+	return key
 }
 
 func (frc *FakeRClient) Keys(pattern string) *redis.StringSliceCmd {

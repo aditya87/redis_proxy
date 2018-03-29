@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aditya87/redis_proxy/cache"
 	"github.com/go-redis/redis"
 	"github.com/go-zoo/bone"
 )
@@ -18,18 +19,27 @@ type RedisClient interface {
 }
 
 type RedisProxy struct {
-	RClient RedisClient
+	RClient    RedisClient
+	LocalCache *cache.Cache
 }
 
 func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	key := params.Get("key")
 
-	value, err := rp.RClient.Get(key).Result()
+	value, err := rp.LocalCache.Get(key)
+	if err == nil {
+		io.WriteString(w, value)
+		return
+	}
+
+	value, err = rp.RClient.Get(key).Result()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("ERROR: Failed to look up value for key %s: %s", key, err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	rp.LocalCache.Set(key, value)
 
 	io.WriteString(w, value)
 }

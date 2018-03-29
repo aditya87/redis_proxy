@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aditya87/redis_proxy/cache"
@@ -54,8 +56,14 @@ func main() {
 		DB:       0,
 	})
 
+	capacity, err := strconv.Atoi(os.Getenv("CACHE_CAPACITY"))
+	if err != nil {
+		log.Fatalf("Could not read cache capacity %s", os.Getenv("CACHE_CAPACITY"))
+	}
+
 	s := RedisProxy{
-		RClient: rClient,
+		RClient:    rClient,
+		LocalCache: cache.NewCache(capacity),
 	}
 
 	fmt.Println("Starting Redis proxy")

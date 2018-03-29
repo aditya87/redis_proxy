@@ -21,7 +21,7 @@ var _ = Describe("RedisProxy", func() {
 
 	BeforeEach(func() {
 		rClient = fakes.NewFakeRClient()
-		lCache = cache.NewCache(3)
+		lCache = cache.NewCache(3, 5*time.Second)
 
 		subject = redis_proxy.RedisProxy{
 			RClient:    rClient,

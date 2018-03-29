@@ -61,9 +61,14 @@ func main() {
 		log.Fatalf("Could not read cache capacity %s", os.Getenv("CACHE_CAPACITY"))
 	}
 
+	expTime, err := strconv.Atoi(os.Getenv("EXPIRATION_TIME"))
+	if err != nil {
+		log.Fatalf("Could not read expiration time %s", os.Getenv("EXPIRATION_TIME"))
+	}
+
 	s := RedisProxy{
 		RClient:    rClient,
-		LocalCache: cache.NewCache(capacity),
+		LocalCache: cache.NewCache(capacity, time.Duration(expTime)*time.Second),
 	}
 
 	fmt.Println("Starting Redis proxy")

@@ -1,6 +1,8 @@
 package cache_test
 
 import (
+	"time"
+
 	"github.com/aditya87/redis_proxy/cache"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,9 +11,10 @@ import (
 var _ = Describe("Cache", func() {
 	var subject *cache.Cache
 	capacity := 3
+	expirationTime := 2 * time.Second
 
 	BeforeEach(func() {
-		subject = cache.NewCache(capacity)
+		subject = cache.NewCache(capacity, expirationTime)
 	})
 
 	It("can be written to and read", func() {
@@ -56,5 +59,21 @@ var _ = Describe("Cache", func() {
 		subject.Set("key5", "value5")
 
 		Expect(subject.Keys()).To(ConsistOf("key2", "key4", "key5"))
+	})
+
+	It("expires keys after the expiration time is elapsed", func() {
+		subject.Set("key1", "value1")
+		subject.Set("key2", "value2")
+		Expect(subject.Keys()).To(ConsistOf("key1", "key2"))
+
+		time.Sleep(1 * time.Second)
+		subject.Set("key3", "value3")
+		Expect(subject.Keys()).To(ConsistOf("key1", "key2", "key3"))
+
+		time.Sleep(1 * time.Second)
+		Expect(subject.Keys()).To(ConsistOf("key3"))
+
+		time.Sleep(1 * time.Second)
+		Expect(subject.Keys()).To(BeEmpty())
 	})
 })

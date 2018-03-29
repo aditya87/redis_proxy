@@ -1,0 +1,13 @@
+FROM golang:1.9.2
+
+RUN mkdir -p /src/github.com/aditya87/redis_proxy
+ENV GOPATH=/
+ENV PATH=$PATH:/bin
+ADD . /src/github.com/aditya87/redis_proxy
+RUN go get github.com/tools/godep
+RUN go get github.com/onsi/ginkgo/ginkgo
+
+WORKDIR /src/github.com/aditya87/redis_proxy
+
+RUN godep restore
+CMD ginkgo ./...

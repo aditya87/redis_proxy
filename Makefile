@@ -1,7 +1,8 @@
 .PHONY: build run test
 
 build:
-	docker build . -t redis_proxy
+	docker build -f Dockerfile . -t redis_proxy
+	docker build -f Dockerfile.test . -t redis_proxy_test
 
 run: build
 	docker run -e REDIS_PASSWORD='' \
@@ -9,5 +10,5 @@ run: build
 		-p 7777:7777 \
 		redis_proxy
 
-test:
-	ginkgo -r .
+test: build
+	docker run redis_proxy_test

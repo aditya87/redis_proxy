@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -62,5 +63,22 @@ var _ = Describe("RedisProxy", func() {
 		Expect(rr.Code).To(Equal(http.StatusInternalServerError))
 		Expect(rClient.GetCalledWith()).To(Equal("k"))
 		Expect(rr.Body.String()).To(ContainSubstring("Failed to look up value for key k: some error"))
+	})
+
+	It("redirects HTTP POSTs to Redis sets and returns the value in the response", func() {
+		req, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte("{\"k\": \"v\"}")))
+
+		By("calling via the redis client")
+		subject.ServePost(rr, req)
+		Expect(rr.Code).To(Equal(http.StatusOK))
+		Expect(rr.Body.String()).To(Equal("v"))
+
+		k, v := rClient.SetCalledWith()
+		Expect(k).To(Equal("k"))
+		Expect(v).To(Equal("v"))
+
+		value, err := rClient.Get("k").Result()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(value).To(Equal("v"))
 	})
 })

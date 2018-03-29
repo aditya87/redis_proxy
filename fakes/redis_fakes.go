@@ -7,9 +7,11 @@ import (
 )
 
 type FakeRClient struct {
-	getCalledWithKey string
-	users            map[string]interface{}
-	err              error
+	getCalledWithKey   string
+	setCalledWithKey   string
+	setCalledWithValue interface{}
+	users              map[string]interface{}
+	err                error
 }
 
 func NewFakeRClient() *FakeRClient {
@@ -24,6 +26,8 @@ func (frc *FakeRClient) SetError(err error) {
 }
 
 func (frc *FakeRClient) Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	frc.setCalledWithKey = key
+	frc.setCalledWithValue = value
 	frc.users[key] = value
 	return redis.NewStatusResult("", frc.err)
 }
@@ -43,6 +47,14 @@ func (frc *FakeRClient) GetCalledWith() string {
 	key := frc.getCalledWithKey
 	frc.getCalledWithKey = ""
 	return key
+}
+
+func (frc *FakeRClient) SetCalledWith() (string, interface{}) {
+	key := frc.setCalledWithKey
+	value := frc.setCalledWithValue
+	frc.setCalledWithKey = ""
+	frc.setCalledWithValue = nil
+	return key, value
 }
 
 func (frc *FakeRClient) Keys(pattern string) *redis.StringSliceCmd {

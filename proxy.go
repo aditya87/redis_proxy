@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -46,6 +48,33 @@ func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, value)
 }
 
+func (rp RedisProxy) ServePost(w http.ResponseWriter, r *http.Request) {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusUnprocessableEntity)
+		return
+	}
+
+	var kvPair map[string]interface{}
+	err = json.Unmarshal(reqBody, &kvPair)
+	if err != nil {
+		http.Error(w, "Invalid JSON request body", http.StatusUnprocessableEntity)
+		return
+	}
+
+	var value interface{}
+	for k, v := range kvPair {
+		_, err = rp.RClient.Set(k, v, 0).Result()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("ERROR: Failed to set value %s for key %s: %s", v, k, err.Error()), http.StatusInternalServerError)
+			return
+		}
+		value = v
+	}
+
+	io.WriteString(w, fmt.Sprintf("%v", value))
+}
+
 func main() {
 	rClient := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf(
@@ -75,6 +104,7 @@ func main() {
 
 	mux := bone.New()
 	mux.GetFunc("/", s.ServeGet)
+	mux.PostFunc("/", s.ServePost)
 
 	http.ListenAndServe(":"+os.Getenv("PORT"), mux)
 }

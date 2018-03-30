@@ -52,6 +52,7 @@ var _ = Describe("Cache", func() {
 		subject.Set("key4", "value4")
 
 		Expect(subject.Keys()).To(ConsistOf("key1", "key2", "key4"))
+		Expect(len(subject.Keys())).To(Equal(3))
 
 		_, _ = subject.Get("key2")
 		_, _ = subject.Get("key4")
@@ -59,21 +60,14 @@ var _ = Describe("Cache", func() {
 		subject.Set("key5", "value5")
 
 		Expect(subject.Keys()).To(ConsistOf("key2", "key4", "key5"))
+		Expect(len(subject.Keys())).To(Equal(3))
 	})
 
 	It("expires keys after the expiration time is elapsed", func() {
 		subject.Set("key1", "value1")
 		subject.Set("key2", "value2")
-		Expect(subject.Keys()).To(ConsistOf("key1", "key2"))
 
-		time.Sleep(1 * time.Second)
-		subject.Set("key3", "value3")
-		Expect(subject.Keys()).To(ConsistOf("key1", "key2", "key3"))
-
-		time.Sleep(1 * time.Second)
-		Expect(subject.Keys()).To(ConsistOf("key3"))
-
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 		Expect(subject.Keys()).To(BeEmpty())
 	})
 

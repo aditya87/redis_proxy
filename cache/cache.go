@@ -105,7 +105,6 @@ func (c *Cache) Remove(key string) {
 func (c *Cache) Start() {
 	for {
 		c.mutex.Lock()
-
 		keysToDelete := []string{}
 
 		for k, v := range c.storage {
@@ -119,8 +118,8 @@ func (c *Cache) Start() {
 			delete(c.storage, key)
 			c.keyList.Remove(e)
 		}
+		c.mutex.Unlock()
 
 		time.Sleep(c.expirationTime / 10)
-		c.mutex.Unlock()
 	}
 }

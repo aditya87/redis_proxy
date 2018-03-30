@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"time"
 
 	redis_proxy "github.com/aditya87/redis_proxy"
@@ -27,6 +28,7 @@ var _ = Describe("RedisProxy", func() {
 		subject = redis_proxy.RedisProxy{
 			RClient:    rClient,
 			LocalCache: lCache,
+			Mutex:      &sync.Mutex{},
 		}
 
 		rr = httptest.NewRecorder()

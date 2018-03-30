@@ -26,12 +26,12 @@ type RedisClient interface {
 type RedisProxy struct {
 	RClient    RedisClient
 	LocalCache *cache.Cache
-	mutex      *sync.Mutex
+	Mutex      *sync.Mutex
 }
 
 func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
-	rp.mutex.Lock()
-	defer rp.mutex.Unlock()
+	rp.Mutex.Lock()
+	defer rp.Mutex.Unlock()
 
 	params := r.URL.Query()
 	key := params.Get("key")
@@ -67,8 +67,8 @@ func (rp RedisProxy) ServePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rp.mutex.Lock()
-	defer rp.mutex.Unlock()
+	rp.Mutex.Lock()
+	defer rp.Mutex.Unlock()
 
 	var value interface{}
 	for k, v := range kvPair {
@@ -107,7 +107,7 @@ func main() {
 	s := RedisProxy{
 		RClient:    rClient,
 		LocalCache: cache.NewCache(capacity, time.Duration(expTime)*time.Second),
-		mutex:      &sync.Mutex{},
+		Mutex:      &sync.Mutex{},
 	}
 
 	fmt.Println("Starting Redis proxy")

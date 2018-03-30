@@ -33,9 +33,9 @@ func main() {
 	os.Setenv("PORT", "3000")
 	os.Setenv("REDIS_PASSWORD", "")
 	os.Setenv("CACHE_CAPACITY", "3")
-	os.Setenv("EXPIRATION_TIME", "20")
+	os.Setenv("EXPIRATION_TIME", "10")
 
-	fmt.Println("Starting redis proxy with cache size 3 and expiration time 20s...")
+	fmt.Println("Starting redis proxy with cache size 3 and expiration time 10s...")
 	cmd = exec.Command("/app/redis_proxy")
 	err = cmd.Start()
 	if err != nil {
@@ -210,7 +210,7 @@ func TestCacheExpiry() error {
 	}
 	t1 := time.Since(s1)
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(12 * time.Second)
 	s2 := time.Now()
 	_, err = getFromProxy("k5")
 	if err != nil {

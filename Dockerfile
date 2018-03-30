@@ -17,14 +17,7 @@ RUN GOOS=linux GOARCH=amd64 go build .
 
 FROM redis
 
-ENV REDIS_PORT=7777
-ENV REDIS_HOST=localhost
-ENV REDIS_PASSWORD=
-ENV CACHE_CAPACITY=5
-ENV EXPIRATION_TIME=10
-ENV PORT=3000
-
 RUN mkdir -p /app
 COPY --from=0 /src/github.com/aditya87/redis_proxy/redis_proxy /app/redis_proxy
 COPY --from=0 /src/github.com/aditya87/redis_proxy/integration/integration /app/integration
-CMD redis-server --port ${REDIS_PORT} --daemonize yes && /app/redis_proxy
+CMD /app/redis_proxy

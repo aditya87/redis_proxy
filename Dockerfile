@@ -27,5 +27,4 @@ ENV PORT=3000
 RUN mkdir -p /app
 COPY --from=0 /src/github.com/aditya87/redis_proxy/redis_proxy /app/redis_proxy
 COPY --from=0 /src/github.com/aditya87/redis_proxy/integration/integration /app/integration
-COPY --from=0 /src/github.com/aditya87/redis_proxy/run.sh /app/run.sh
 CMD redis-server --port ${REDIS_PORT} --daemonize yes && /app/redis_proxy

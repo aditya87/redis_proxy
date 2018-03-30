@@ -32,10 +32,10 @@ func main() {
 	os.Setenv("REDIS_PORT", "7777")
 	os.Setenv("PORT", "3000")
 	os.Setenv("REDIS_PASSWORD", "")
-	os.Setenv("CACHE_CAPACITY", "5")
-	os.Setenv("EXPIRATION_TIME", "10")
+	os.Setenv("CACHE_CAPACITY", "3")
+	os.Setenv("EXPIRATION_TIME", "20")
 
-	fmt.Println("Starting redis proxy with cache size 5 and expiration time 10s...")
+	fmt.Println("Starting redis proxy with cache size 3 and expiration time 20s...")
 	cmd = exec.Command("/app/redis_proxy")
 	err = cmd.Start()
 	if err != nil {
@@ -74,6 +74,11 @@ func main() {
 	}
 
 	err = TestCacheExpiry()
+	if err != nil {
+		log.Fatalf("FAILED: %v\n", err)
+	}
+
+	err = TestSequentialConcurrentConnections()
 	if err != nil {
 		log.Fatalf("FAILED: %v\n", err)
 	}
@@ -133,7 +138,7 @@ func TestCacheGet() error {
 
 	log.Printf("Uncached lookup took %s seconds, cached lookup took %s\n", t1.String(), t2.String())
 	if t1 <= t2 {
-		return fmt.Errorf("Expected second lookup (took %d time) to be faster than first (which took %d time)", t2, t1)
+		return fmt.Errorf("Expected second lookup (took %s time) to be faster than first (which took %s time)", t2.String(), t1.String())
 	}
 
 	log.Println("PASS")
@@ -205,7 +210,7 @@ func TestCacheExpiry() error {
 	}
 	t1 := time.Since(s1)
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(20 * time.Second)
 	s2 := time.Now()
 	_, err = getFromProxy("k5")
 	if err != nil {
@@ -216,6 +221,47 @@ func TestCacheExpiry() error {
 	log.Printf("Uncached lookup took %s seconds, cached lookup took %s\n", t2.String(), t1.String())
 	if t2 <= t1 {
 		return fmt.Errorf("Expected first lookup (took %d time) to be faster than second (which took %d time)", t1, t2)
+	}
+
+	log.Println("PASS")
+	return nil
+}
+
+func TestSequentialConcurrentConnections() error {
+	log.Print("Testing sequential concurrent connections ...")
+
+	rClient.Set("k5", "value5", 0)
+	rClient.Set("k6", "value6", 0)
+
+	for i := 0; i < 5; i++ {
+		l1 := make(chan string)
+		l2 := make(chan string)
+		ch := make(chan string, 2)
+
+		go func() {
+			<-l1
+			v1, _ := getFromProxy("k5")
+			ch <- v1
+		}()
+
+		go func() {
+			<-l2
+			v2, _ := getFromProxy("k6")
+			ch <- v2
+		}()
+
+		l1 <- "go"
+		time.Sleep(500 * time.Millisecond)
+		l2 <- "go"
+
+		r1 := <-ch
+		r2 := <-ch
+		if r1 != "value5" || r2 != "value6" {
+			close(ch)
+			return fmt.Errorf("Expected lookups to be in order (value5, value6), got (%s, %s)", r1, r2)
+		}
+
+		close(ch)
 	}
 
 	log.Println("PASS")

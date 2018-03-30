@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/aditya87/redis_proxy/cache"
@@ -25,9 +26,13 @@ type RedisClient interface {
 type RedisProxy struct {
 	RClient    RedisClient
 	LocalCache *cache.Cache
+	mutex      *sync.Mutex
 }
 
 func (rp RedisProxy) ServeGet(w http.ResponseWriter, r *http.Request) {
+	rp.mutex.Lock()
+	defer rp.mutex.Unlock()
+
 	params := r.URL.Query()
 	key := params.Get("key")
 
@@ -61,6 +66,9 @@ func (rp RedisProxy) ServePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON request body", http.StatusUnprocessableEntity)
 		return
 	}
+
+	rp.mutex.Lock()
+	defer rp.mutex.Unlock()
 
 	var value interface{}
 	for k, v := range kvPair {
@@ -99,6 +107,7 @@ func main() {
 	s := RedisProxy{
 		RClient:    rClient,
 		LocalCache: cache.NewCache(capacity, time.Duration(expTime)*time.Second),
+		mutex:      &sync.Mutex{},
 	}
 
 	fmt.Println("Starting Redis proxy")

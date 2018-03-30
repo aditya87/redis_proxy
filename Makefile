@@ -3,7 +3,6 @@
 build:
 	@echo "Building Docker images..."
 	docker build -q -f Dockerfile . -t redis_proxy
-	docker build -q -f Dockerfile.test . -t redis_proxy_test
 
 run: build
 	docker run -e REDIS_PASSWORD='' \
@@ -11,11 +10,16 @@ run: build
 		-p 7777:7777 \
 		redis_proxy
 
-test: build
+# Run unit tests with ginkgo
+unit_test:
+	docker build -q -f Dockerfile.test . -t redis_proxy_test
 	@echo ''
 	@echo "#########Running unit test suite....##########"
 	docker run redis_proxy_test
 	@echo "DONE UNIT TESTS"
+
+# Run integration tests
+test: build
 	@echo ''
 	@echo "#########Running integration test suite....#############"
 	docker run -e REDIS_PASSWORD='' \

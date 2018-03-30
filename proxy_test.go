@@ -66,19 +66,28 @@ var _ = Describe("RedisProxy", func() {
 	})
 
 	It("redirects HTTP POSTs to Redis sets and returns the value in the response", func() {
-		req, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte("{\"k\": \"v\"}")))
+		rClient.Set("k", "v1", 5*time.Second)
+		req, _ := http.NewRequest("GET", "?key=k", nil)
+		subject.ServeGet(rr, req)
+		rr = httptest.NewRecorder()
+
+		req, _ = http.NewRequest("POST", "/", bytes.NewBuffer([]byte("{\"k\": \"v2\"}")))
 
 		By("calling via the redis client")
 		subject.ServePost(rr, req)
 		Expect(rr.Code).To(Equal(http.StatusOK))
-		Expect(rr.Body.String()).To(Equal("v"))
+		Expect(rr.Body.String()).To(Equal("v2"))
 
 		k, v := rClient.SetCalledWith()
 		Expect(k).To(Equal("k"))
-		Expect(v).To(Equal("v"))
+		Expect(v).To(Equal("v2"))
 
 		value, err := rClient.Get("k").Result()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(value).To(Equal("v"))
+		Expect(value).To(Equal("v2"))
+
+		By("removing the value from the cache")
+		_, err = lCache.Get("k")
+		Expect(err).To(MatchError(ContainSubstring("key k not found")))
 	})
 })

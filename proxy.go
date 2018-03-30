@@ -70,6 +70,7 @@ func (rp RedisProxy) ServePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		value = v
+		rp.LocalCache.Remove(k)
 	}
 
 	io.WriteString(w, fmt.Sprintf("%v", value))

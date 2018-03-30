@@ -50,7 +50,7 @@ func (c *Cache) Get(key string) (string, error) {
 
 func (c *Cache) findElementForKey(key string) *list.Element {
 	element := c.keyList.Front()
-	for element.Value != key {
+	for element != nil && element.Value != key {
 		element = element.Next()
 	}
 
@@ -87,6 +87,19 @@ func (c *Cache) Keys() []string {
 	}
 
 	return keys
+}
+
+func (c *Cache) Remove(key string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	e := c.findElementForKey(key)
+	if e == nil {
+		return
+	}
+
+	delete(c.storage, key)
+	c.keyList.Remove(e)
 }
 
 func (c *Cache) Start() {

@@ -76,4 +76,14 @@ var _ = Describe("Cache", func() {
 		time.Sleep(1 * time.Second)
 		Expect(subject.Keys()).To(BeEmpty())
 	})
+
+	It("can delete keys", func() {
+		subject.Set("key1", "value1")
+		subject.Set("key2", "value2")
+		Expect(subject.Keys()).To(ConsistOf("key1", "key2"))
+
+		subject.Remove("key1")
+		subject.Remove("key3")
+		Expect(subject.Keys()).To(ConsistOf("key2"))
+	})
 })

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"time"
 
 	"github.com/go-redis/redis"
 )
@@ -14,6 +16,23 @@ var rClient *redis.Client
 
 func main() {
 	fmt.Println("Starting test suite...")
+
+	fmt.Println("Starting redis server...")
+	cmd := exec.Command("redis-server", "--port", "7777")
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalf("Could not start redis-server: %v\n", err)
+	}
+	time.Sleep(3 * time.Second)
+
+	fmt.Println("Starting redis proxy...")
+	cmd = exec.Command("/app/redis_proxy")
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("Could not start redis_proxy: %v\n", err)
+	}
+	time.Sleep(3 * time.Second)
+
 	fmt.Println("Setting up redis client")
 	rClient = redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf(
@@ -24,7 +43,7 @@ func main() {
 		DB:       0,
 	})
 
-	err := TestGet()
+	err = TestGet()
 	if err != nil {
 		log.Fatalf("FAILED: %v\n", err)
 	}
